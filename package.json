@@ -7,14 +7,14 @@
     "test": "npm run test:unit",
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test:unit": "node --test --experimental-test-coverage tests/unit/registro-telefono.test.js"
+    "test:unit": "node --test --test-reporter=spec --experimental-test-coverage tests/unit/*.test.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@google/genai": "^0.10.0",
     "@google/generative-ai": "^0.21.0",
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -35,5 +35,8 @@
     "url": "https://github.com/MariCalderon8/MoneyShare-Backend-VankProject2/issues"
   },
   "homepage": "https://github.com/MariCalderon8/MoneyShare-Backend-VankProject2#readme",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
 }
