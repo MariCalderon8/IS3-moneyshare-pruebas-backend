@@ -1,55 +1,78 @@
-name: MoneyShare Backend - CI (CP-05)
+name: MoneyShare Backend - CI
 
-# Paso 1: deteccion del push.
+# Se ejecuta automaticamente en cada pull y push a main/develop
+# y manualmente desde la pestana Actions (workflow_dispatch).
 on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# Si llegan dos pushes seguidos a la misma rama, cancela la ejecucion anterior.
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  pruebas-backend:
-    name: Verificacion de backend y prueba unitaria CP-05
+  pruebas-unitarias:
+    name: Pruebas unitarias (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
 
     steps:
-      # Paso 3: checkout del commit que activo el pipeline.
-      - name: Checkout del codigo
+      - name: Descargar el codigo del commit
         uses: actions/checkout@v4
 
-      # Paso 2: aprovisionamiento del runner (sin Docker).
-      - name: Configurar Node.js
+      - name: Configurar Node.js ${{ matrix.node }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node }}
           cache: npm
 
-      # Paso 4: instalar y verificar sintaxis (backend JS, no requiere compilacion).
       - name: Instalar dependencias
         run: npm ci
 
       - name: Verificar sintaxis de JavaScript
-        run: find src -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+        run: find src tests -type f -name '*.js' -print0 | xargs -0 -n1 node --check
 
-      # Paso 5: ejecutar exactamente una prueba unitaria (CP-05).
-      - name: Prueba unitaria CP-05 y resumen de cobertura
+      # Ejecuta TODAS las pruebas unitarias (tests/unit/*.test.js) y muestra la cobertura.
+      # No requiere PostgreSQL, Gemini ni red: las dependencias externas estan simuladas.
+      # Si alguna prueba falla, el comando devuelve codigo != 0 y el pipeline queda en rojo.
+      - name: Ejecutar pruebas unitarias
         shell: bash
         run: |
           set -o pipefail
           mkdir -p reports
-          npm run test:unit 2>&1 | tee reports/resultado-CP-05.txt
+          npm run test:unit 2>&1 | tee reports/resultado-pruebas-unitarias.txt
 
-      - name: Publicar evidencia de la ejecucion
+      - name: Resumen en la pagina de la ejecucion
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Pruebas unitarias - Node ${{ matrix.node }}"
+            echo
+            echo '```'
+            grep -E '^(ℹ|# )(tests|suites|pass|fail|cancelled|skipped|todo|duration_ms)' reports/resultado-pruebas-unitarias.txt || echo "Sin resumen disponible"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar evidencia de la ejecucion
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-prueba-CP-05
-          path: reports/resultado-CP-05.txt
+          name: resultado-pruebas-unitarias-node${{ matrix.node }}
+          path: reports/resultado-pruebas-unitarias.txt
           if-no-files-found: warn
           retention-days: 14
 
-# El pipeline termina en el paso 5: no incluye deploy.
+# Este pipeline solo valida el codigo (CI). No incluye despliegue.

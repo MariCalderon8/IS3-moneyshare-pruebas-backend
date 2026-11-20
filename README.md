@@ -33,28 +33,23 @@ El backend estará disponible en `http://localhost:3000`, salvo que se configure
 
 ## 3. Ejecutar pruebas unitarias
 
-Para ejecutar las pruebas del backend:
-
 ```bash
-npm run test:unit
+npm test            # equivale a npm run test:unit
 ```
 
-También se pueden ejecutar mediante:
+Ejecuta todas las pruebas de `tests/unit/` (casos CP-01 a CP-48 del plan, en su porción unitaria) y muestra la cobertura.
+No requieren iniciar el servidor, PostgreSQL, Gemini ni conexión a internet. Para correr un solo caso:
 
 ```bash
-npm test
+npm run test:unit -- --test-name-pattern="CP-29"
 ```
 
-Estos comandos requieren que se hayan incorporado previamente el archivo de prueba y los scripts de `package.json`.
-
-Actualmente se implementa una prueba unitaria correspondiente al **CP-05**, que valida la longitud del número telefónico durante el registro de usuarios (10 a 15 dígitos).
-
-Las pruebas no requieren iniciar el servidor ni conectarse a PostgreSQL.
+El detalle de cada archivo, lo que no cubren y los defectos detectados está en [`tests/README.md`](tests/README.md).
 
 ## 4. Ejecución automática de pruebas
 
 El proyecto utiliza **GitHub Actions** mediante `.github/workflows/backend-ci.yml`.
 
-El pipeline se activa automáticamente al realizar un push a las ramas configuradas y ejecuta la instalación de dependencias, validación del código y pruebas unitarias.
-
-Los resultados pueden consultarse en la pestaña **Actions** del repositorio en GitHub.
+El pipeline se activa en cada push a `main` o `develop`, en cada pull request hacia `main` y de forma manual. Instala
+dependencias (`npm ci`), valida la sintaxis y ejecuta `npm run test:unit` en Node 20 y 22. Si una prueba falla, el
+pipeline queda en rojo. El resultado queda como artefacto y como resumen en la pestaña **Actions** del repositorio.
