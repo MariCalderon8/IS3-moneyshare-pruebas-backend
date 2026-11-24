@@ -7,7 +7,7 @@
     "test": "npm run test:unit",
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test:unit": "node --test --experimental-test-coverage tests/unit/registro-telefono.test.js"
+    "test:unit": "node --test --experimental-test-coverage tests/unit/*.test.js"
   },
   "author": "",
   "license": "ISC",
